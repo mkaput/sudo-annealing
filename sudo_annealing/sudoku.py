@@ -17,16 +17,24 @@ def load_pack(path_glob: str, recursive=False) -> List['Sudoku']:
 
 
 class Sudoku:
-    def __init__(self, data: List[int]):
+    def __init__(self, data: List[int], mask: Optional[List[bool]]=None):
         """
         Creates puzzle from raw representation as list of 81
         numbers 1-9 and 0 for empty fields.
 
         :param data: Raw representation of sudoku puzzle
+        :param mask: List of booleans stating if field was empty in original puzzle
         """
 
+        assert len(data) == 81
+
         self.data = data
-        self.mask = [i == 0 for i in data]
+
+        if mask is not None:
+            assert len(mask) == 81
+            self.mask = mask
+        else:
+            self.mask = [i == 0 for i in data]
 
     @classmethod
     def parse(cls, s: str) -> Optional['Sudoku']:
