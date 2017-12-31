@@ -1,23 +1,46 @@
-import glob
-import gzip
 import string
 from typing import List, Optional
 
+import numpy as np
 
-def load_pack(path_glob: str, recursive=False) -> List['Sudoku']:
-    pack = []
-    for path in glob.iglob(path_glob, recursive=recursive):
-        if path.endswith('.txt.gz'):
-            with gzip.open(path, mode='rt') as f:
-                for line in f:
-                    sudoku = Sudoku.parse(line)
-                    if sudoku is not None:
-                        pack.append(sudoku)
-    return pack
+# language=css
+css = '''
+table.sudoku {
+    border: 2px solid #555;
+}
 
+table.sudoku tr {
+    background: #fff !important;
+}
+
+table.sudoku tr.b {
+    border-bottom: 2px solid #555;
+}
+
+table.sudoku td {
+    border: 1px solid #bbb;
+    width: 2.5em;
+    height: 2.5em;
+    text-align: center;
+}
+
+table.sudoku td.m {
+    background: #f4f4f4;
+}
+
+table.sudoku td.b {
+    border-right: 2px solid #555;
+}
+'''
+
+
+def class_attr(classes: List[str]) -> str:
+    if classes:
+        return f''' class="{' '.join(classes)}"'''
+    return ''
 
 class Sudoku:
-    def __init__(self, data: List[int], mask: Optional[List[bool]]=None):
+    def __init__(self, data: List[int], mask: Optional[List[bool]] = None):
         """
         Creates puzzle from raw representation as list of 81
         numbers 1-9 and 0 for empty fields.
@@ -28,13 +51,14 @@ class Sudoku:
 
         assert len(data) == 81
 
-        self.data = data
+        self.data = np.array(data, dtype=np.uint8)
 
         if mask is not None:
             assert len(mask) == 81
-            self.mask = mask
         else:
-            self.mask = [i == 0 for i in data]
+            mask = [i == 0 for i in data]
+
+        self.mask = np.array(mask, dtype=np.bool)
 
     @classmethod
     def parse(cls, s: str) -> Optional['Sudoku']:
@@ -49,29 +73,38 @@ class Sudoku:
             return None
         return cls(data)
 
+    def clone(self) -> 'Sudoku':
+        return Sudoku(
+            self.data.copy(),
+            self.mask.copy(),
+        )
+
     def _repr_html_(self) -> str:
-        r = ['<table style="border: 2px solid #555">']
+        r = [
+            f'<style>{css}</style>'
+            '<table class="sudoku">'
+        ]
 
         for i, d in enumerate(self.data):
             if i % 9 == 0:
-                row_style = 'background: #fff;'
+                row_class = []
 
                 if i == 18 or i == 45:
-                    row_style += 'border-bottom: 2px solid #555;'
+                    row_class.append('b')
 
-                r.append(f'<tr style="{row_style}">')
+                r.append(f'<tr{class_attr(row_class)}>')
 
-            cell_style = 'border: 1px solid #bbb;width:2.5em;height:2.5em;text-align:center;'
+            cell_class = []
 
             if not self.mask[i]:
-                cell_style += 'background: #f4f4f4;'
+                cell_class.append('m')
 
             if i % 3 == 2 and i % 9 != 8:
-                cell_style += 'border-right: 2px solid #555;'
+                cell_class.append('b')
 
             cell_value = '' if d == 0 else d
 
-            r.append(f'<td style="{cell_style}">{cell_value}</td>')
+            r.append(f'<td{class_attr(cell_class)}>{cell_value}</td>')
 
             if i % 9 == 8:
                 r.append('</tr>')
