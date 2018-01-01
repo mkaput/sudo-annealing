@@ -3,8 +3,6 @@ import gzip
 from collections import UserList
 from typing import List, Callable, TypeVar, Generic
 
-from ipywidgets import interact
-
 from .sudoku import Sudoku
 
 T = TypeVar('T')
@@ -24,9 +22,6 @@ class SudokuPack(Generic[T], UserList, List[T]):
             return self._extract(self.data[i])
 
         return g
-
-    def interact(self):
-        interact(self.f, i=(0, len(self.data) - 1))
 
 
 def load_pack(path_glob: str, recursive=False) -> SudokuPack[Sudoku]:
