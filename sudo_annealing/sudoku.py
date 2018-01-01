@@ -1,7 +1,10 @@
 import string
-from typing import List, Optional
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
+
+Coords = Union[int, Tuple[int, int]]
+Row = Tuple[int, int, int, int, int, int, int, int, int]
 
 # language=css
 css = '''
@@ -39,6 +42,7 @@ def class_attr(classes: List[str]) -> str:
         return f''' class="{' '.join(classes)}"'''
     return ''
 
+
 class Sudoku:
     def __init__(self, data: List[int], mask: Optional[List[bool]] = None):
         """
@@ -72,6 +76,61 @@ class Sudoku:
         if len(data) != 81:
             return None
         return cls(data)
+
+    @classmethod
+    def conv2t1(cls, c2d: Tuple[int, int]) -> int:
+        """
+        Converts 2D cell coords to 1D
+        """
+        x, y = c2d
+        assert 0 <= x < 9 and 0 <= y < 9
+        return y * 9 + x
+
+    @classmethod
+    def conv1t2(cls, c1d: int) -> Tuple[int, int]:
+        """
+        Converts 1D cell coords to 2D
+        """
+        x, y = c1d % 9, c1d // 9
+        assert 0 <= x < 9 and 0 <= y < 9
+        return x, y
+
+    @classmethod
+    def unify_coords(cls, coords: Coords) -> int:
+        if isinstance(coords, tuple):
+            coords = cls.conv2t1(coords)
+        assert 0 <= coords < 81
+        return coords
+
+    def __getitem__(self, coords: Coords) -> int:
+        return self.data[self.unify_coords(coords)]
+
+    def get_row(self, coords: Coords) -> Row:
+        offset = (self.unify_coords(coords) // 9) * 9
+        return tuple(self.data[offset:offset + 9])
+
+    def get_col(self, coords: Coords) -> Row:
+        offset = self.unify_coords(coords) % 9
+        return tuple(self.data[offset::9])
+
+    def get_box(self, coords: Coords) -> Row:
+        x, y = self.conv1t2(self.unify_coords(coords))
+        x, y = (x // 3) * 3, (y // 3) * 3
+        p = []
+        for i in range(3):
+            for j in range(3):
+                p.append(self.conv2t1((x + j, y + i)))
+        # noinspection PyTypeChecker
+        return tuple(self.data[i] for i in p)
+
+    def masked(self, coords: Coords) -> bool:
+        return self.mask[self.unify_coords(coords)]
+
+    def is_safe_to_put(self, value: int, coords: Coords) -> bool:
+        assert 1 <= value <= 9
+        return value not in self.get_row(coords) and \
+               value not in self.get_col(coords) and \
+               value not in self.get_box(coords)
 
     def clone(self) -> 'Sudoku':
         return Sudoku(

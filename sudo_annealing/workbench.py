@@ -72,4 +72,4 @@ class workbench(VBox):
 
 
 def workbench_f(algorithm: AbstractSolver, puzzle: Sudoku) -> SudokuSolution:
-    return algorithm.solve(puzzle)
+    return algorithm.solve(puzzle.clone())
