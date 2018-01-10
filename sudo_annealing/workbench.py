@@ -1,12 +1,11 @@
 import random
 from typing import List
 
-from IPython.display import clear_output
-from ipywidgets import BoundedIntText, Dropdown, VBox, Button, HBox, Output, interact, SelectionSlider
+from IPython.display import clear_output, display
+from ipywidgets import BoundedIntText, Dropdown, VBox, Button, HBox, Output, interact, SelectionSlider, Label
 
 from sudo_annealing.puzzle_pack import SudokuPack
-from sudo_annealing.solvers.abstract import AbstractSolver, SudokuSolution
-from sudo_annealing.sudoku import Sudoku
+from sudo_annealing.solvers.abstract import AbstractSolver, NonSteppingSolver
 
 
 class workbench(VBox):
@@ -17,7 +16,7 @@ class workbench(VBox):
         self.puzzle_pack = puzzle_pack
 
         self.algorithm_dropdown = Dropdown(
-            options={a.full_name(): a for a in algorithms},
+            options={a.display_name(): a for a in algorithms},
             description='Algorithm:',
         )
 
@@ -56,20 +55,24 @@ class workbench(VBox):
                 algorithm = self.algorithm_dropdown.get_interact_value()
                 puzzle_id = self.puzzle_id_input.get_interact_value()
                 puzzle = self.puzzle_pack[puzzle_id]
-                self.result = workbench_f(algorithm, puzzle)
+                self.result = algorithm.solve(puzzle.clone())
                 self.display_result()
         finally:
             self.run_btn.disabled = False
 
     def display_result(self):
-        interact(
-            self.result.f,
-            i=SelectionSlider(
-                options={iteration: i for i, (iteration, _) in enumerate(self.result.data)},
-                description='Iteration',
-            ),
-        )
-
-
-def workbench_f(algorithm: AbstractSolver, puzzle: Sudoku) -> SudokuSolution:
-    return algorithm.solve(puzzle.clone())
+        if len(self.result) == 2:
+            orig = self.result[0][1]
+            solv = self.result[1][1]
+            display(Label('Problem:'))
+            display(orig)
+            display(Label('Solution:'))
+            display(solv)
+        else:
+            interact(
+                self.result.f,
+                i=SelectionSlider(
+                    options={iteration: i for i, (iteration, _) in enumerate(self.result.data)},
+                    description='Iteration',
+                ),
+            )
