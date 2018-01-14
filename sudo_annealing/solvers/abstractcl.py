@@ -45,3 +45,8 @@ class CLSolver(NonSteppingSolver):
         cl.enqueue_copy(queue, solution_np, solution)
 
         return Sudoku(solution_np, sudoku.mask)
+
+    @classmethod
+    @abstractmethod
+    def run_kernel(cls, sudoku_data: np.ndarray, program) -> np.ndarray:
+        pass
