@@ -1,6 +1,5 @@
 import os
 from abc import abstractmethod
-from functools import lru_cache
 
 import numpy as np
 import pyopencl as cl
@@ -14,13 +13,19 @@ queue = cl.CommandQueue(ctx)
 MF = cl.mem_flags
 
 
+def print_device_info():
+    print('Used OpenCL devices:')
+    for i, device in enumerate(ctx.devices, start=1):
+        print(f'[{i}]', device.name)
+        print('   ', 'OpenCL version:', device.version)
+        print('   ', 'OpenCL C version:', device.opencl_c_version)
+
 def get_program_source(program_name: str) -> str:
     path = os.path.join(os.path.dirname(__file__), 'cl', f'{program_name}.cl')
     with open(path, 'r') as f:
         return f.read()
 
 
-@lru_cache(maxsize=32)
 def get_program(program_name: str) -> cl.Program:
     source = get_program_source(program_name)
     prg = cl.Program(ctx, source)
