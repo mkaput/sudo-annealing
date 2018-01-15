@@ -14,13 +14,15 @@ class CLDFS(CLSolver):
         return 'cldfs'
 
     @classmethod
-    def run_kernel(cls, sudoku_data: np.ndarray, bitmask: np.ndarray, program) -> np.ndarray:
-        in_sudoku = cl.Buffer(ctx, MF.READ_ONLY | MF.COPY_HOST_PTR, hostbuf=sudoku_data)
-        solution = cl.Buffer(ctx, MF.WRITE_ONLY, sudoku_data.nbytes)
+    def run_kernel(cls, sudoku: np.ndarray, bitmask: np.ndarray, program) -> np.ndarray:
+        sudoku_buff = cl.Buffer(ctx(), MF.READ_ONLY | MF.COPY_HOST_PTR, hostbuf=sudoku)
+        bitmask_buff = cl.Buffer(ctx(), MF.READ_ONLY | MF.COPY_HOST_PTR, hostbuf=bitmask)
+        solution_buff = cl.Buffer(ctx(), MF.WRITE_ONLY, sudoku.nbytes)
 
-        program.solve(queue, sudoku_data.shape, None, in_sudoku, solution)
+        program.solve(queue(), sudoku.shape, None,
+            sudoku_buff, bitmask_buff, solution_buff)
 
-        solution_np = np.empty_like(sudoku_data)
-        cl.enqueue_copy(queue, solution_np, solution)
+        solution = np.empty_like(sudoku)
+        cl.enqueue_copy(queue(), solution, solution_buff)
 
-        return solution_np
+        return solution

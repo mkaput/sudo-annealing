@@ -7,18 +7,30 @@ import pyopencl as cl
 from sudo_annealing.solvers.abstract import NonSteppingSolver
 from sudo_annealing.sudoku import Sudoku
 
-ctx = cl.create_some_context()
-queue = cl.CommandQueue(ctx)
 
+__ctx = None
+__queue = None
 MF = cl.mem_flags
 
 
-def print_device_info():
+def init():
+    global __ctx, __queue
+    __ctx = cl.create_some_context(interactive=True)
+    __queue = cl.CommandQueue(__ctx)
+
     print('Used OpenCL devices:')
-    for i, device in enumerate(ctx.devices, start=1):
+    for i, device in enumerate(__ctx.devices, start=1):
         print(f'[{i}]', device.name)
         print('   ', 'OpenCL version:', device.version)
-        print('   ', 'OpenCL C version:', device.opencl_c_version)
+        print('   ', 'Supported Extensions:')
+        for ext in device.extensions.split(' '):
+            print('   ', '-', ext)
+
+def ctx():
+    return __ctx
+
+def queue():
+    return __queue
 
 def get_program_source(program_name: str) -> str:
     path = os.path.join(os.path.dirname(__file__), 'cl', f'{program_name}.cl')
@@ -28,7 +40,7 @@ def get_program_source(program_name: str) -> str:
 
 def get_program(program_name: str) -> cl.Program:
     source = get_program_source(program_name)
-    prg = cl.Program(ctx, source)
+    prg = cl.Program(ctx(), source)
     return prg.build()
 
 
