@@ -19,8 +19,10 @@ class CLDFS(CLSolver):
         bitmask_buff = cl.Buffer(ctx(), MF.READ_ONLY | MF.COPY_HOST_PTR, hostbuf=bitmask)
         solution_buff = cl.Buffer(ctx(), MF.WRITE_ONLY, sudoku.nbytes)
 
-        program.solve(queue(), [1], None,
-            sudoku_buff, bitmask_buff, solution_buff)
+        program.solve(
+            queue(), [1], None,
+            sudoku_buff, bitmask_buff,
+            solution_buff)
 
         solution = np.empty_like(sudoku)
         cl.enqueue_copy(queue(), solution, solution_buff)
