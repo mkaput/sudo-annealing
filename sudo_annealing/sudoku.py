@@ -138,6 +138,28 @@ class Sudoku:
             self.mask.copy(),
         )
 
+    def bitmask(self) -> np.ndarray:
+        """
+        Returns mask represented as 128bit bitmap, where 1 means field is empty.
+        The bitmap is represented as 2-vector of 64-bit unsigned integers,
+        little endian, least significant bit contains mask for first cell.
+
+        So value layout looks like this:
+        ```
+        [63, ..., 1, 0] [(unused, zeros)..., 81, ..., 65, 64]
+        ```
+
+        To index it one can use following formula:
+        ```
+        bitmask(i) = bitmask[i // 64] & (1 << (i % 64))
+        ```
+        """
+        bit = np.array([0, 0], dtype=np.uint64)
+        for i, v in enumerate(self.mask):
+            if v:
+                bit[i // 64] |= np.uint64(1 << (i % 64))
+        return bit
+
     def _repr_html_(self) -> str:
         r = [
             f'<style>{css}</style>'

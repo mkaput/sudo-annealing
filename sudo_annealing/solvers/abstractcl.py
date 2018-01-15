@@ -35,18 +35,14 @@ class CLSolver(NonSteppingSolver):
 
     @classmethod
     def do_solve(cls, sudoku: Sudoku) -> Sudoku:
-        in_sudoku = cl.Buffer(ctx, MF.READ_ONLY | MF.COPY_HOST_PTR, hostbuf=sudoku.data)
-        solution = cl.Buffer(ctx, MF.WRITE_ONLY, sudoku.data.nbytes)
-
-        program = get_program(cls.program_name())
-        program.solve(queue, sudoku.data.shape, None, in_sudoku, solution)
-
-        solution_np = np.empty_like(sudoku.data)
-        cl.enqueue_copy(queue, solution_np, solution)
-
+        solution_np = cls.run_kernel(
+            sudoku.data,
+            sudoku.bitmask(),
+            get_program(cls.program_name())
+        )
         return Sudoku(solution_np, sudoku.mask)
 
     @classmethod
     @abstractmethod
-    def run_kernel(cls, sudoku_data: np.ndarray, program) -> np.ndarray:
+    def run_kernel(cls, sudoku_data: np.ndarray, bitmask: np.ndarray, program) -> np.ndarray:
         pass

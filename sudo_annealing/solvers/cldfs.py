@@ -14,7 +14,7 @@ class CLDFS(CLSolver):
         return 'cldfs'
 
     @classmethod
-    def run_kernel(cls, sudoku_data: np.ndarray, program) -> np.ndarray:
+    def run_kernel(cls, sudoku_data: np.ndarray, bitmask: np.ndarray, program) -> np.ndarray:
         in_sudoku = cl.Buffer(ctx, MF.READ_ONLY | MF.COPY_HOST_PTR, hostbuf=sudoku_data)
         solution = cl.Buffer(ctx, MF.WRITE_ONLY, sudoku_data.nbytes)
 
